@@ -23,6 +23,7 @@ const ActionButton = props => {
   const anim = useRef(new Animated.Value(props.active ? 1 : 0));
   const timeout = useRef(null);
   const mounted = useRef(false);
+  const [hideShadow, setHideShadow] = useState(props.hideShadow);
 
   useEffect(() => {
     mounted.current = true;
@@ -116,11 +117,12 @@ const ActionButton = props => {
     const parentStyle =
       isAndroid && props.fixNativeFeedbackRadius
         ? {
-            right: props.offsetX,
-            zIndex: props.zIndex,
-            borderRadius: props.size / 2,
-            width: props.size
-          }
+          right: props.offsetX,
+          zIndex: props.zIndex,
+          borderRadius: props.size / 2,
+          width: props.size,
+          overflow: 'hidden'
+        }
         : { marginHorizontal: props.offsetX, zIndex: props.zIndex };
 
     return (
@@ -139,6 +141,7 @@ const ActionButton = props => {
             props.nativeFeedbackRippleColor,
             props.fixNativeFeedbackRadius
           )}
+          useForeground
           activeOpacity={props.activeOpacity}
           onLongPress={props.onLongPress}
           onPress={() => {
@@ -222,6 +225,7 @@ const ActionButton = props => {
             anim={anim.current}
             {...props}
             {...ActionButton.props}
+            hideShadow={hideShadow}
             parentSize={props.size}
             btnColor={props.btnOutRange}
             onPress={() => {
@@ -254,16 +258,21 @@ const ActionButton = props => {
     if (active) return reset(animate);
 
     if (animate) {
-      Animated.spring(anim.current, { toValue: 1 }).start();
+      Animated.timing(anim.current, {
+        toValue: 1,
+        duration: 200
+      }).start(() => setHideShadow(props.hideShadow));
     } else {
       anim.current.setValue(1);
     }
 
+    setHideShadow(true);
     setActive(true);
   };
 
   const reset = (animate = true) => {
     if (props.onReset) props.onReset();
+    setHideShadow(true);
 
     if (animate) {
       Animated.spring(anim.current, { toValue: 0 }).start();
@@ -273,6 +282,7 @@ const ActionButton = props => {
 
     timeout.current = setTimeout(() => {
       if (mounted.current) {
+        setHideShadow(props.hideShadow);
         setActive(false);
       }
     }, 250);
@@ -372,9 +382,9 @@ ActionButton.defaultProps = {
   spacing: 20,
   outRangeScale: 1,
   autoInactive: true,
-  onPress: () => {},
-  onPressIn: () => {},
-  onPressOn: () => {},
+  onPress: () => { },
+  onPressIn: () => { },
+  onPressOn: () => { },
   backdrop: false,
   degrees: 45,
   position: "right",
